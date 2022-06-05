@@ -1,0 +1,30 @@
+name: QMK
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Clone qmk/qmk_firmware
+      uses: actions/checkout@v2
+      with:
+        repository: 'qmk/qmk_firmware'
+        submodules: true
+
+    - name: Clone usrname/your-repo
+      uses: actions/checkout@v2
+      with:
+        path: './keyboards/your-repo/keymaps/km-name'
+
+    - name: Install dependencies
+      run: ./util/qmk_install.sh
+
+    - name: Compile
+      run: ./bin/qmk compile -kb kb_name -km km_name
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: qmk_firmware_releases.hex
+        path: ./.build/qmk_firmware_releases.hex
