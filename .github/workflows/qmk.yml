@@ -1,11 +1,22 @@
-name: QMK
+name: QMK firamware compile
 
 on:
-  - push
+  workflow_dispatch:
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    container:
+      image: docker://qmkfm/base_container:latest
+      volumes: 
+        - .:/qmk_firmware
     steps:
     - name: Clone qmk/qmk_firmware
       uses: actions/checkout@v2
