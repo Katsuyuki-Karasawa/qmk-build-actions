@@ -1,40 +1,49 @@
-name: QMK firamware compile
+name: Build and Release QMK Firmware
 
 on:
-  workflow_dispatch:
-
   push:
-    branches:
-      - master
-    tags:
-      - v*
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  build_and_release:
     runs-on: ubuntu-latest
-    container:
-      image: docker://qmkfm/base_container:latest
-      volumes: 
-        - .:/qmk_firmware
     steps:
-    - name: Clone qmk/qmk_firmware
-      uses: actions/checkout@v2
-      with:
-        repository: 'qmk/qmk_firmware'
-        submodules: true
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Clone usrname/your-repo
-      uses: actions/checkout@v2
-      with:
-        path: './keyboards/your-repo/keymaps/km-name'
+      - name: Set up QMK Docker
+        uses: docker://qmkfm/qmk_firmware:latest
 
-    - name: Install dependencies
-      run: ./util/qmk_install.sh
+      - name: Build firmware
+        run: |
+          cd qmk_firmware
+          make <your-make-targets>
 
-    - name: Compile
-      run: ./bin/qmk compile -kb kb_name -km km_name
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          body: |
+            Release Notes for v${{ github.run_number }}
 
-    - uses: actions/upload-artifact@v3
-      with:
-        name: qmk_firmware_releases.hex
-        path: ./.build/qmk_firmware_releases.hex
+            Add your release notes here.
+
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: <your-asset-path>
+          asset_name: <your-asset-name>
+          asset_content_type: application/zip
